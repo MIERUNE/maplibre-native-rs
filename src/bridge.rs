@@ -121,9 +121,9 @@ pub mod sources {
         /// Downcasts a base `Source` pointer to a GeoJSON source pointer.
         ///
         /// Returns null if `source` is null or is not a GeoJSON source.
-        fn source_as_geojson(source: *const Source) -> *const GeoJSONSource;
+        unsafe fn source_as_geojson(source: *const Source) -> *const GeoJSONSource;
         /// Mutable variant of [`source_as_geojson`].
-        fn source_as_geojson_mut(source: *mut Source) -> *mut GeoJSONSource;
+        unsafe fn source_as_geojson_mut(source: *mut Source) -> *mut GeoJSONSource;
     }
 
     #[namespace = "mln::bridge::style::sources::geojson"]
@@ -135,7 +135,7 @@ pub mod sources {
         /// Sets the GeoJSON data for the source.
         fn setGeoJson(source: &UniquePtr<GeoJSONSource>, geojson: &CxxGeoJson);
         /// Sets the GeoJSON data for a GeoJSON source owned by a style.
-        fn setGeoJsonPtr(source: *mut GeoJSONSource, geojson: &CxxGeoJson);
+        unsafe fn setGeoJsonPtr(source: *mut GeoJSONSource, geojson: &CxxGeoJson);
     }
 }
 

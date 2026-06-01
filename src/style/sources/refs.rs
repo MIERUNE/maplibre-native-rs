@@ -41,6 +41,7 @@ impl<'a> GeoJsonRef<'a> {
         (!source.is_null()).then_some(Self { source, _lifetime: PhantomData })
     }
 
+    /// Returns the underlying raw MapLibre Native GeoJSON source pointer.
     #[must_use]
     pub fn as_raw(&self) -> *const bridge_sources::GeoJSONSource {
         self.source
@@ -49,9 +50,7 @@ impl<'a> GeoJsonRef<'a> {
 
 impl fmt::Debug for GeoJsonRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("GeoJsonRef")
-            .field("source", &self.source)
-            .finish_non_exhaustive()
+        f.debug_struct("GeoJsonRef").field("source", &self.source).finish_non_exhaustive()
     }
 }
 
@@ -68,9 +67,10 @@ impl<'a> GeoJsonRefMut<'a> {
 
     /// Sets the GeoJSON data for this source.
     pub fn set_geojson(&mut self, geojson: &GeoJson) {
-        bridge_sources::setGeoJsonPtr(self.source, geojson.as_inner());
+        unsafe { bridge_sources::setGeoJsonPtr(self.source, geojson.as_inner()) };
     }
 
+    /// Returns the underlying raw MapLibre Native GeoJSON source pointer.
     #[must_use]
     pub fn as_raw(&self) -> *mut bridge_sources::GeoJSONSource {
         self.source
@@ -79,9 +79,7 @@ impl<'a> GeoJsonRefMut<'a> {
 
 impl fmt::Debug for GeoJsonRefMut<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("GeoJsonRefMut")
-            .field("source", &self.source)
-            .finish_non_exhaustive()
+        f.debug_struct("GeoJsonRefMut").field("source", &self.source).finish_non_exhaustive()
     }
 }
 
@@ -96,6 +94,7 @@ impl<'a> UnsupportedSourceRef<'a> {
         (!source.is_null()).then_some(Self { source, _lifetime: PhantomData })
     }
 
+    /// Returns the underlying raw MapLibre Native source pointer.
     #[must_use]
     pub fn as_raw(&self) -> *const ffi::CxxSource {
         self.source
@@ -104,9 +103,7 @@ impl<'a> UnsupportedSourceRef<'a> {
 
 impl fmt::Debug for UnsupportedSourceRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("UnsupportedSourceRef")
-            .field("source", &self.source)
-            .finish_non_exhaustive()
+        f.debug_struct("UnsupportedSourceRef").field("source", &self.source).finish_non_exhaustive()
     }
 }
 
@@ -121,6 +118,7 @@ impl<'a> UnsupportedSourceRefMut<'a> {
         (!source.is_null()).then_some(Self { source, _lifetime: PhantomData })
     }
 
+    /// Returns the underlying raw MapLibre Native source pointer.
     #[must_use]
     pub fn as_raw(&self) -> *mut ffi::CxxSource {
         self.source
@@ -134,4 +132,3 @@ impl fmt::Debug for UnsupportedSourceRefMut<'_> {
             .finish_non_exhaustive()
     }
 }
-

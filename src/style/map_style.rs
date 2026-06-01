@@ -80,7 +80,7 @@ impl<'a, S> Style<'a, S> {
 
         // Try supported source types first, then fall back to an opaque handle.
         let as_source = source as *const bridge_sources::Source;
-        let geojson = bridge_sources::source_as_geojson(as_source);
+        let geojson = unsafe { bridge_sources::source_as_geojson(as_source) };
         if let Some(geojson) = GeoJsonRef::from_raw(geojson) {
             return Some(SourceRef::GeoJson(geojson));
         }
@@ -96,18 +96,14 @@ impl<'a, S> Style<'a, S> {
     #[must_use]
     pub fn get_source_mut(&mut self, source_id: impl AsRef<str>) -> Option<SourceRefMut<'_>> {
         let source_id = source_id.as_ref();
-        let source = self
-            .image_renderer
-            .instance
-            .pin_mut()
-            .style_get_source_mut(source_id);
+        let source = self.image_renderer.instance.pin_mut().style_get_source_mut(source_id);
         if source.is_null() {
             return None;
         }
 
         // Try supported source types first, then fall back to an opaque handle.
         let as_source = source as *mut bridge_sources::Source;
-        let geojson = bridge_sources::source_as_geojson_mut(as_source);
+        let geojson = unsafe { bridge_sources::source_as_geojson_mut(as_source) };
         if let Some(geojson) = GeoJsonRefMut::from_raw(geojson) {
             return Some(SourceRefMut::GeoJson(geojson));
         }
