@@ -117,6 +117,14 @@ public:
         map->getStyle().removeSource(std::string(id));
     }
 
+    const mbgl::style::Source* style_get_source(rust::Str id) const {
+        return map->getStyle().getSource(std::string(id));
+    }
+
+    mbgl::style::Source* style_get_source_mut(rust::Str id) {
+        return map->getStyle().getSource(std::string(id));
+    }
+
     void style_add_layer(std::unique_ptr<mbgl::style::Layer> layer, rust::Str before_id) {
         // An empty before_id string means no before layer was specified.
         map->getStyle().addLayer(

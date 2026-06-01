@@ -16,4 +16,7 @@ pub use layers::{
     CircleLayer, FillLayer, Layer, LayerId, LineCap, LineJoin, LineLayer, SymbolAnchor, SymbolLayer,
 };
 pub use map_style::Style;
-pub use sources::{GeoJsonSource, Source, SourceId};
+pub use sources::{
+    GeoJsonRef, GeoJsonRefMut, GeoJsonSource, Source, SourceId, SourceRef, SourceRefMut,
+    UnsupportedSourceRef, UnsupportedSourceRefMut,
+};

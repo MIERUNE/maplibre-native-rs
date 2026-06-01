@@ -9,6 +9,20 @@ namespace mln::bridge::style::sources {
         std::unique_ptr<mbgl::style::GeoJSONSource> source) {
         return source;
     }
+
+    const mbgl::style::GeoJSONSource* source_as_geojson(const mbgl::style::Source* source) {
+        if (!source) {
+            return nullptr;
+        }
+        return source->as<mbgl::style::GeoJSONSource>();
+    }
+
+    mbgl::style::GeoJSONSource* source_as_geojson_mut(mbgl::style::Source* source) {
+        if (!source) {
+            return nullptr;
+        }
+        return source->as<mbgl::style::GeoJSONSource>();
+    }
 }
 
 namespace mln::bridge::style::sources::geojson {
@@ -18,6 +32,14 @@ namespace mln::bridge::style::sources::geojson {
 
     void setGeoJson(const std::unique_ptr<mbgl::style::GeoJSONSource>& source,
                     const mln::bridge::geojson::GeoJson& geojson) {
+        source->setGeoJSON(geojson.get());
+    }
+
+    void setGeoJsonPtr(mbgl::style::GeoJSONSource* source,
+                       const mln::bridge::geojson::GeoJson& geojson) {
+        if (!source) {
+            return;
+        }
         source->setGeoJSON(geojson.get());
     }
 }

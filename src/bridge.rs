@@ -117,6 +117,13 @@ pub mod sources {
 
         /// Upcasts a GeoJSON source handle to the base `Source` type.
         fn geojson_into_source(source: UniquePtr<GeoJSONSource>) -> UniquePtr<Source>;
+
+        /// Downcasts a base `Source` pointer to a GeoJSON source pointer.
+        ///
+        /// Returns null if `source` is null or is not a GeoJSON source.
+        fn source_as_geojson(source: *const Source) -> *const GeoJSONSource;
+        /// Mutable variant of [`source_as_geojson`].
+        fn source_as_geojson_mut(source: *mut Source) -> *mut GeoJSONSource;
     }
 
     #[namespace = "mln::bridge::style::sources::geojson"]
@@ -127,6 +134,8 @@ pub mod sources {
         fn create(id: &str) -> UniquePtr<GeoJSONSource>;
         /// Sets the GeoJSON data for the source.
         fn setGeoJson(source: &UniquePtr<GeoJSONSource>, geojson: &CxxGeoJson);
+        /// Sets the GeoJSON data for a GeoJSON source owned by a style.
+        fn setGeoJsonPtr(source: *mut GeoJSONSource, geojson: &CxxGeoJson);
     }
 }
 
@@ -937,6 +946,14 @@ pub mod ffi {
         ) -> Result<()>;
         /// Removes a source from the style by ID.
         fn style_remove_source(self: Pin<&mut MapRenderer>, id: &str);
+        /// Gets a source from the style by ID.
+        ///
+        /// Returns null if the source does not exist.
+        fn style_get_source(self: &MapRenderer, id: &str) -> *const CxxSource;
+        /// Gets a mutable source from the style by ID.
+        ///
+        /// Returns null if the source does not exist.
+        fn style_get_source_mut(self: Pin<&mut MapRenderer>, id: &str) -> *mut CxxSource;
         /// Adds a layer to the style, optionally before an existing layer
         /// (pass an empty `before_id` to append to the end of the style).
         fn style_add_layer(

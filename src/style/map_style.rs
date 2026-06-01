@@ -1,7 +1,10 @@
 use image::DynamicImage;
 
-use crate::bridge::ffi;
-use crate::{ImageId, ImageRenderer, Layer, LayerId, Source, SourceId, StyleError};
+use crate::bridge::{ffi, sources as bridge_sources};
+use crate::{
+    GeoJsonRef, GeoJsonRefMut, ImageId, ImageRenderer, Layer, LayerId, Source, SourceId, SourceRef,
+    SourceRefMut, StyleError, UnsupportedSourceRef, UnsupportedSourceRefMut,
+};
 
 /// The style of the map.
 #[derive(Debug)]
@@ -62,6 +65,56 @@ impl<'a, S> Style<'a, S> {
         let source_id = SourceId::new(source.source_id().to_owned());
         self.image_renderer.instance.pin_mut().style_add_source(source.into_source())?;
         Ok(source_id)
+    }
+
+    /// Gets a source reference from the current map style by ID.
+    ///
+    /// Returns `None` if `source_id` does not match an existing source.
+    #[must_use]
+    pub fn get_source(&mut self, source_id: impl AsRef<str>) -> Option<SourceRef<'_>> {
+        let source_id = source_id.as_ref();
+        let source = self.image_renderer.instance.style_get_source(source_id);
+        if source.is_null() {
+            return None;
+        }
+
+        // Try supported source types first, then fall back to an opaque handle.
+        let as_source = source as *const bridge_sources::Source;
+        let geojson = bridge_sources::source_as_geojson(as_source);
+        if let Some(geojson) = GeoJsonRef::from_raw(geojson) {
+            return Some(SourceRef::GeoJson(geojson));
+        }
+
+        Some(SourceRef::Unsupported(
+            UnsupportedSourceRef::from_raw(source).expect("source is non-null"),
+        ))
+    }
+
+    /// Gets a mutable source reference from the current map style by ID.
+    ///
+    /// Returns `None` if `source_id` does not match an existing source.
+    #[must_use]
+    pub fn get_source_mut(&mut self, source_id: impl AsRef<str>) -> Option<SourceRefMut<'_>> {
+        let source_id = source_id.as_ref();
+        let source = self
+            .image_renderer
+            .instance
+            .pin_mut()
+            .style_get_source_mut(source_id);
+        if source.is_null() {
+            return None;
+        }
+
+        // Try supported source types first, then fall back to an opaque handle.
+        let as_source = source as *mut bridge_sources::Source;
+        let geojson = bridge_sources::source_as_geojson_mut(as_source);
+        if let Some(geojson) = GeoJsonRefMut::from_raw(geojson) {
+            return Some(SourceRefMut::GeoJson(geojson));
+        }
+
+        Some(SourceRefMut::Unsupported(
+            UnsupportedSourceRefMut::from_raw(source).expect("source is non-null"),
+        ))
     }
 
     /// Adds a new layer and returns its stable layer ID.
