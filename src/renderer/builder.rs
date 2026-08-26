@@ -92,11 +92,37 @@ impl ImageRendererBuilder {
         ImageRenderer::new(MapMode::Static, self)
     }
 
+    /// Builds a static image renderer, surfacing graphics-stack construction
+    /// failures (for example an EGL display that cannot be initialized) as an
+    /// error instead of a panic.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RendererBuildError`] when the native renderer cannot be
+    /// constructed, typically because the platform graphics context cannot be
+    /// created.
+    pub fn try_build_static_renderer(
+        self,
+    ) -> Result<ImageRenderer<Static>, RendererBuildError> {
+        ImageRenderer::try_new(MapMode::Static, self)
+    }
+
     /// Builds a tile renderer
     #[must_use]
     pub fn build_tile_renderer(self) -> ImageRenderer<Tile> {
         // TODO: Is the width/height used for this mode?
         ImageRenderer::new(MapMode::Tile, self)
+    }
+
+    /// Fallible variant of [`build_tile_renderer`](Self::build_tile_renderer);
+    /// see [`try_build_static_renderer`](Self::try_build_static_renderer).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RendererBuildError`] when the native renderer cannot be
+    /// constructed.
+    pub fn try_build_tile_renderer(self) -> Result<ImageRenderer<Tile>, RendererBuildError> {
+        ImageRenderer::try_new(MapMode::Tile, self)
     }
 
     /// Builds a continuous renderer.
@@ -116,11 +142,41 @@ impl ImageRendererBuilder {
     pub fn build_continuous_renderer(self) -> ImageRenderer<Continuous> {
         ImageRenderer::new(MapMode::Continuous, self)
     }
+
+    /// Fallible variant of
+    /// [`build_continuous_renderer`](Self::build_continuous_renderer); see
+    /// [`try_build_static_renderer`](Self::try_build_static_renderer).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`RendererBuildError`] when the native renderer cannot be
+    /// constructed.
+    pub fn try_build_continuous_renderer(
+        self,
+    ) -> Result<ImageRenderer<Continuous>, RendererBuildError> {
+        ImageRenderer::try_new(MapMode::Continuous, self)
+    }
 }
+
+/// The native renderer could not be constructed.
+///
+/// Construction reaches the platform graphics stack (context creation inside
+/// the headless frontend), so a broken display environment fails here rather
+/// than at render time. The message carries the native exception's text.
+#[derive(thiserror::Error, Debug)]
+#[error("failed to construct the native map renderer: {0}")]
+pub struct RendererBuildError(String);
 
 impl<S> ImageRenderer<S> {
     /// Creates a new renderer instance
     fn new(map_mode: MapMode, opts: ImageRendererBuilder) -> Self {
+        Self::try_new(map_mode, opts).expect("native map renderer construction failed")
+    }
+
+    /// Creates a new renderer instance, surfacing native construction
+    /// exceptions as [`RendererBuildError`] instead of terminating the
+    /// process.
+    fn try_new(map_mode: MapMode, opts: ImageRendererBuilder) -> Result<Self, RendererBuildError> {
         let resource_options = opts.resource_options.unwrap_or_default();
         let mut map = ffi::MapRenderer_new(
             map_mode,
@@ -128,19 +184,20 @@ impl<S> ImageRenderer<S> {
             opts.height.get(),
             opts.pixel_ratio,
             resource_options.as_ref(),
-        );
+        )
+        .map_err(|exception| RendererBuildError(exception.what().to_string()))?;
 
         // Wire up the observer dispatchers once; `map_observer()` afterwards is
         // a pure view that only swaps the stored callbacks.
         let observer_callbacks = Rc::new(MapObserverCallbacks::default());
         observer_callbacks.install(&map.pin_mut().observer());
 
-        Self {
+        Ok(Self {
             instance: map,
             observer_callbacks,
             style_specified: false,
             _marker: PhantomData,
             _not_send: PhantomData,
-        }
+        })
     }
 }

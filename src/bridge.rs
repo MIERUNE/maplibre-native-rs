@@ -1141,6 +1141,12 @@ pub mod ffi {
         /// CoreFoundation (non-libuv) run loop; a no-op on the libuv backend.
         fn currentThreadRunLoopStop();
         /// Creates a new map renderer instance.
+        ///
+        /// Fallible because construction reaches the platform graphics stack
+        /// (EGL/Metal/Vulkan context creation inside the headless frontend); a
+        /// broken display environment throws `std::runtime_error` there, and
+        /// without this `Result` boundary the exception escapes into
+        /// `std::terminate` and takes the whole process down.
         #[allow(clippy::too_many_arguments)]
         fn MapRenderer_new(
             mapMode: MapMode,
@@ -1148,7 +1154,7 @@ pub mod ffi {
             height: u32,
             pixelRatio: f32,
             resource_options: &CxxResourceOptions,
-        ) -> UniquePtr<MapRenderer>;
+        ) -> Result<UniquePtr<MapRenderer>>;
         /// Reads the current still image from the renderer.
         fn readStillImage(self: Pin<&mut MapRenderer>) -> UniquePtr<BridgeImage>;
         /// Gets the pixel data pointer from a bridge image.

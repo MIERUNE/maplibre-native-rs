@@ -8,7 +8,7 @@ mod resource_options;
 mod run_loop;
 pub mod tile_server_options;
 
-pub use builder::ImageRendererBuilder;
+pub use builder::{ImageRendererBuilder, RendererBuildError};
 pub use camera::CameraUpdate;
 pub use file_source::{
     register_file_source, CancelHook, FileSource, FileSourceType, ForwardCompletion,
